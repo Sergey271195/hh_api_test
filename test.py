@@ -335,7 +335,7 @@ class TestCase_14(TestCase):
         text_field = "Жұмыс"
         params = {'text': text_field, }
         json_response = self.make_request(params)
-        self.description = f'Проверка поля на казахский язык:\nОжидаемое поведение: В ответе на запрос, содержащий казахское слово {text_field}, вернется более 1 вакансии'
+        self.description = f'Проверка поля на казахский язык:\nОжидаемое поведение: В ответе на запрос, содержащий слово на казахском языке {text_field}, вернется более 1 вакансии'
         self.right_test_message = f"В ответе на запрос вернулось более 1 вакансии ( {json_response.get('found')} )"
         self.wrong_test_message = f"В ответе на данный запрос не вернулось ни одной вакансии"
         return json_response.get('found') > 0
@@ -347,7 +347,7 @@ class TestCase_15(TestCase):
         text_field = "лікар"
         params = {'text': text_field, }
         json_response = self.make_request(params)
-        self.description = f'Проверка поля на украинский язык:\nОжидаемое поведение: В ответе на запрос, содержащий украинское слово {text_field}, вернется более 1 вакансии'
+        self.description = f'Проверка поля на украинский язык:\nОжидаемое поведение: В ответе на запрос, содержащий слово на украинском языке {text_field}, вернется более 1 вакансии'
         self.right_test_message = f"В ответе на запрос вернулось более 1 вакансии ( {json_response.get('found')} )"
         self.wrong_test_message = f"В ответе на данный запрос не вернулось ни одной вакансии"
         return json_response.get('found') > 0
@@ -359,11 +359,76 @@ class TestCase_16(TestCase):
         text_field = "開發商"
         params = {'text': text_field,}
         json_response = self.make_request(params)
-        self.description = f'Проверка поля на китайский язык:\nОжидаемое поведение: В ответе на запрос, содержащий китайское слово {text_field}, текстовое поле будет проигнорировано, вернется список всех опубликованных вакансий'
+        self.description = f'Проверка поля на китайский язык:\nОжидаемое поведение: В ответе на запрос, содержащий слово на китайском языке {text_field}, текстовое поле будет проигнорировано, вернется список всех опубликованных вакансий'
         self.right_test_message = f"Текстовое поле было проигнорировано. В ответе на запрос вернулось более 1 вакансии ( {json_response.get('found')} )"
         self.wrong_test_message = f"В ответе на данный запрос не вернулось ни одной вакансии"
         return json_response.get('found') > 0
 
+
+class TestCase_17(TestCase):
+
+    def test(self):
+        text_field = "java"
+        params = {'text': text_field,}
+        json_response = requests.post(os.path.join(self.BASE_URL, self.path), params = params)
+        self.description = f'Проверка поля на POST метод:\nОжидаемое поведение: В ответе на POST запрос должна вернуться ошибка со статусом 403'
+        self.right_test_message = f"Запрос вернул ошибку 403 Forbidden"
+        self.wrong_test_message = f"Запрос прошел без ошибки"
+        return json_response.status_code == 403
+
+class TestCase_18(TestCase):
+
+    def test(self):
+        text_field = "java"
+        params = {'test': text_field,}
+        json_response = self.make_request(params)
+        self.description = f'Опечатка при указании названия поля (test вместо text):\nОжидаемое поведение: Текстовое поле будет проигнорировано, вернется список всех опубликованных вакансий'
+        self.right_test_message = f"В запросе было проигнорировано текстовое поле. Запрос вернул все опубликованные вакансии."
+        self.wrong_test_message = f"Текстовое поле не было проигнорировано. Запрос вернул только искомые вакансии"
+        return json_response.get('found') > 500_000
+
+class TestCase_19(TestCase):
+
+    def test(self):
+        text_field_1 = "ёлка"
+        text_field_2 = "елка"
+        params_1 = {'text': f"!{text_field_1}", 'search_field': 'company_name'}
+        params_2 = {'text': f"!{text_field_2}", 'search_field': 'company_name'}
+        json_response_1 = self.make_request(params_1)
+        json_response_2 = self.make_request(params_2)
+        self.description = f'Буква ё в запросе:\nОжидаемое поведение: Запрос вернет результаты, содержащие буквы е и ё'
+        self.right_test_message = f"Запрос < {text_field_1} > вернул такое же число записей как и < {text_field_2} >"
+        self.wrong_test_message = f"Запрос < {text_field_1} > вернул иное число записей по сравнению с запросом < {text_field_2} > ({json_response_1.get('found')} и {json_response_2.get('found')})"
+        return json_response_1.get('found') == json_response_2.get('found')
+
+
+class TestCase_20(TestCase):
+
+    def test(self):
+        text_field_1 = "Яндекс"
+        text_field_2 = "Янтекс"
+        params_1 = {'text': f"{text_field_1}", 'search_field': 'company_name'}
+        params_2 = {'text': f"{text_field_2}", 'search_field': 'company_name'}
+        json_response_1 = self.make_request(params_1)
+        json_response_2 = self.make_request(params_2)
+        self.description = f'Опечатка в запросе:\nОжидаемое поведение: Опечатка будет определена. Запрос вернет результаты такое же число записей, как и запрос без опечатки'
+        self.right_test_message = f"Запрос < {text_field_1} > вернул такое же число записей как и < {text_field_2} >"
+        self.wrong_test_message = f"Запрос < {text_field_1} > вернул иное число записей по сравнению с запросом < {text_field_2} > ({json_response_1.get('found')} и {json_response_2.get('found')})"
+        return json_response_1.get('found') == json_response_2.get('found')
+
+class TestCase_21(TestCase):
+
+    def test(self):
+        text_field_1 = "ЯНДЕКС"
+        text_field_2 = "яндекс"
+        params_1 = {'text': f"{text_field_1}", 'search_field': 'company_name'}
+        params_2 = {'text': f"{text_field_2}", 'search_field': 'company_name'}
+        json_response_1 = self.make_request(params_1)
+        json_response_2 = self.make_request(params_2)
+        self.description = f'Проверка поля на регистр:\nОжидаемое поведение: Запрос вернет одинаковое число записей независимо от регистра'
+        self.right_test_message = f"Запрос < {text_field_1} > вернул такое же число записей как и < {text_field_2} >"
+        self.wrong_test_message = f"Запрос < {text_field_1} > вернул иное число записей по сравнению с запросом < {text_field_2} > ({json_response_1.get('found')} и {json_response_2.get('found')})"
+        return json_response_1.get('found') == json_response_2.get('found')
 
 if __name__ == '__main__':
     tc1 = TestCase_1(
@@ -412,6 +477,21 @@ if __name__ == '__main__':
         path = 'vacancies',
     )
     tc16 = TestCase_16(
+        path = 'vacancies',
+    ) 
+    tc17 = TestCase_17(
+        path = 'vacancies',
+    )
+    tc18 = TestCase_18(
+        path = 'vacancies',
+    )
+    tc19 = TestCase_19(
+        path = 'vacancies',
+    )
+    tc20 = TestCase_20(
+        path = 'vacancies',
+    )
+    tc21 = TestCase_21(
         path = 'vacancies',
     )
     TestCase.run_tests()
