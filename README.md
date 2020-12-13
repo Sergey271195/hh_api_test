@@ -8,3 +8,8 @@
 API_KEY=YOUR_API_KEY, где YOUR_API_KEY - ключ, который Вы хотите использовать.
 
 При отсутствии ключа, запросы будут выполняться без параметра Authorization в заголовке
+
+
+При использовании Dockerfile:
+1. Запустить команду docker build --tag test_api:1.0 .
+2. Запустить команду docker run -it test_api:2.0
